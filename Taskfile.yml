@@ -1,0 +1,67 @@
+version: '3'
+
+vars:
+  IMAGE_NAME: function/python
+  IMAGE_VERSION: 0.0.1
+  PYTHON_VERSIONS: 3.10-alpine 3.11-alpine
+  PYTHON_LATEST: 3.11-alpine
+
+tasks:
+  build:
+    desc: Build images
+    cmds:
+      - for: { var: PYTHON_VERSIONS }
+        cmd: |
+          docker build \
+            --build-arg PYTHON_VERSION={{ .ITEM }} \
+            --tag {{ .IMAGE_NAME }}:{{ .IMAGE_VERSION }}-{{ .ITEM }} \
+            --file Dockerfile \
+            .
+      - |
+        docker tag \
+          "{{ .IMAGE_NAME }}:{{ .IMAGE_VERSION }}-{{ .PYTHON_LATEST }}" \
+          "{{ .IMAGE_NAME }}:{{ .IMAGE_VERSION }}"
+      - |
+        docker tag \
+          "{{ .IMAGE_NAME }}:{{ .IMAGE_VERSION }}-{{ .PYTHON_LATEST }}" \
+          "{{ .IMAGE_NAME }}:latest"
+
+  run-dev:
+    desc: Run local development server
+    deps: [build]
+    cmds:
+      - |
+        docker run \
+          --rm \
+          --publish 8080:8080 \
+          --volume "$(pwd)/app:/app" \
+          --env GUNICORN_WORKERS=1 \
+          --env GUNICORN_PORT=8080 \
+          --env GUNICORN_OPTS='--reload --log-level="debug"' \
+          {{ .IMAGE_NAME }}:{{ .IMAGE_VERSION }}-{{ .PYTHON_LATEST }}
+
+  test-function:
+    desc: Test a function
+    deps: [build]
+    cmds:
+      - test "{{ .FUNCTION_NAME }}"
+      - |
+        docker build \
+          --build-arg FUNCTION_VERSION=latest \
+          --tag demo/function/{{ .FUNCTION_NAME }}:latest \
+          --file examples/{{ .FUNCTION_NAME }}/Dockerfile \
+          examples/{{ .FUNCTION_NAME }}
+      - |
+        docker run \
+          --rm \
+          --publish 8080:8080 \
+          --volume "$(pwd)/examples/simple:/funtions" \
+          --env GUNICORN_WORKERS=1 \
+          --env GUNICORN_PORT=8080 \
+          --env GUNICORN_OPTS='--log-level="debug"' \
+          demo/function/{{ .FUNCTION_NAME }}:latest
+
+  lint:
+    desc: Lint code
+    cmds:
+      - pylint app examples
