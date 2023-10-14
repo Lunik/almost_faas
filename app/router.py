@@ -7,7 +7,7 @@ Description: This file define the core of the application
 
 import os
 
-from flask import Flask, Blueprint
+from flask import Flask
 
 from loader import FunctionLoader
 
@@ -28,17 +28,11 @@ def create_app():
 
   loader = FunctionLoader(function_folder=FUNCTION_FOLDER)
 
-  user_function = loader.load(function_handler=FUNCTION_HANDLER)
-
-  # if user_function is a Blueprint, register it
-  if isinstance(user_function, Blueprint):
-    app.register_blueprint(user_function)
-
-  # if user_function is a function, register it
-  elif callable(user_function):
-    app.add_url_rule(FUNCTION_PATH, "index", user_function, methods=FUNCTION_METHODS)
-
-  else:
-    raise TypeError(f"Handler '{FUNCTION_HANDLER}' reference an unknown type: '{type(user_function)}'")
+  loader.load(
+    app=app,
+    function_handler=FUNCTION_HANDLER,
+    path=FUNCTION_PATH,
+    methods=FUNCTION_METHODS,
+  )
 
   return app

@@ -11,8 +11,14 @@ bp = Blueprint('function', __name__)
 
 @bp.route('/')
 def index():
+  '''
+  Hello World function
+  '''
   return 'Hello World!'
 
 @bp.route('/<name>')
 def hello(name):
-  return 'Hello %s!' % name
+  '''
+  Hello function with a name
+  '''
+  return f"Hello {name}!"

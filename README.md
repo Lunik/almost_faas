@@ -24,7 +24,7 @@ Function list on path `/` by default. You can change it by setting the `FUNCTION
 
 Function listen to method `GET` and `POST` by default. You can change it by setting the `FUNCTION_METHODS` environment variable (Comma separated list).
 
-Function listen on '/healthz' path for health check.
+Function listen on `/healthz` path for health check.
 
 ## Running the function
 
